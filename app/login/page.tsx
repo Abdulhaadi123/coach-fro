@@ -47,19 +47,14 @@ export default function LoginPage() {
     try {
       const response = await api.login(email, password)
       
-      // Debug: Log token and user info
-      console.log('🔑 Login Response Debug:', {
-        hasToken: !!response.token,
-        tokenLength: response.token?.length || 0,
-        userRole: response.user?.role,
-        userId: response.user?.id,
-        userName: response.user?.name
-      })
-      
       toast.success("Login successful!")
       // Redirect based on role
       if (response.user.role === 'admin') {
         router.replace('/admin/company-management')
+      } else if (response.user.role === 'coach') {
+        router.replace('/coach/team-management')
+      } else if (response.user.role === 'sales') {
+        router.replace('/sales')
       } else {
         router.replace('/pricing')
       }

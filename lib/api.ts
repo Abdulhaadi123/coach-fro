@@ -1,36 +1,12 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 const VOICE_API_URL = process.env.NEXT_PUBLIC_VOICE_API_URL || 'http://172.184.104.225:5000';
 
-// Get token from localStorage
-const getToken = () => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('token');
-  }
-  return null;
-};
-
-// Global fetch wrapper to handle 401 responses and add Authorization header
+// Global fetch wrapper
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
-  const token = getToken();
-  const headers: Record<string, string> = {
-    ...(options.headers as Record<string, string>),
-  };
-  
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  
   const res = await fetch(url, {
     ...options,
-    headers,
+    credentials: 'include',
   });
-  
-  if (res.status === 401 && typeof window !== 'undefined') {
-    // User deleted or token invalid, clear token and redirect to login
-    localStorage.removeItem('token');
-    window.location.href = '/login';
-    return res;
-  }
   
   return res;
 };
@@ -78,11 +54,6 @@ export const api = {
       throw new Error(json.message || 'Login failed');
     }
     
-    // Save token to localStorage
-    if (json.token && typeof window !== 'undefined') {
-      localStorage.setItem('token', json.token);
-    }
-    
     return json;
   },
 
@@ -91,11 +62,6 @@ export const api = {
       method: 'POST',
       credentials: 'include',
     });
-    
-    // Clear token from localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-    }
     
     return res.json();
   },

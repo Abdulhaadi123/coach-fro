@@ -2,7 +2,6 @@
 
 import { DashboardTab } from "@/components/sales/dashboard-tab"
 import { useRouter } from "next/navigation"
-import { ProtectedRoute } from "@/components/auth/protected-route"
 
 export default function HomePage() {
   const router = useRouter()
@@ -20,8 +19,6 @@ export default function HomePage() {
   }
 
   return (
-    <ProtectedRoute>
-      <DashboardTab onNavigate={handleNavigation} />
-    </ProtectedRoute>
+    <DashboardTab onNavigate={handleNavigation} />
   )
 }
