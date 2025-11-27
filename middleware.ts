@@ -34,6 +34,12 @@ function decodeToken(token: string): { role: string; exp?: number } | null {
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')
   const pathname = request.nextUrl.pathname
+  
+  console.log('🔍 Middleware Debug:', {
+    pathname,
+    hasToken: !!token?.value,
+    tokenLength: token?.value?.length || 0
+  })
 
   // Allow setup pages FIRST - without any token checks
   if (pathname === '/coach-setup' || pathname === '/rep-setup') {
@@ -51,11 +57,38 @@ export function middleware(request: NextRequest) {
   // Add cache control headers for ALL protected routes (with or without token)
   if (isProtectedRoute) {
     // If no token, redirect to login
-    if (!token) {
+    if (!token?.value) {
       return applyNoCacheHeaders(NextResponse.redirect(new URL('/login', request.url)))
     }
 
-    // If token exists, continue with cache headers
+    // Validate token
+    const decoded = decodeToken(token.value)
+    if (!decoded) {
+      console.log('❌ Token validation failed, redirecting to login')
+      const response = NextResponse.redirect(new URL('/login', request.url))
+      response.cookies.delete('token')
+      return applyNoCacheHeaders(response)
+    }
+    
+    console.log('✅ Token valid, user role:', decoded.role)
+
+    // Role-based access control
+    if (pathname.startsWith('/admin') && decoded.role !== 'admin') {
+      console.log('🚫 Access denied: Admin required, user role:', decoded.role)
+      return applyNoCacheHeaders(NextResponse.redirect(new URL('/login', request.url)))
+    }
+    if (pathname.startsWith('/coach') && decoded.role !== 'coach') {
+      console.log('🚫 Access denied: Coach required, user role:', decoded.role)
+      return applyNoCacheHeaders(NextResponse.redirect(new URL('/login', request.url)))
+    }
+    if (pathname.startsWith('/sales') && decoded.role !== 'sales') {
+      console.log('🚫 Access denied: Sales required, user role:', decoded.role)
+      return applyNoCacheHeaders(NextResponse.redirect(new URL('/login', request.url)))
+    }
+    
+    console.log('🎯 Access granted:', { role: decoded.role, pathname })
+
+    // If token is valid, continue with cache headers
     const response = NextResponse.next()
     response.headers.set('Surrogate-Control', 'no-store')
     return applyNoCacheHeaders(response)
@@ -80,6 +113,7 @@ export function middleware(request: NextRequest) {
     
     const redirectPath = roleRoutes[payload.role]
     if (redirectPath) {
+      console.log('🔄 Redirecting logged-in user:', { role: payload.role, to: redirectPath })
       return applyNoCacheHeaders(NextResponse.redirect(new URL(redirectPath, request.url)))
     }
   }
