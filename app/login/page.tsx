@@ -49,17 +49,16 @@ export default function LoginPage() {
       
       toast.success("Login successful!")
       
-      // Use window.location for reliable redirect in production
-      let redirectUrl = '/pricing'
+      // Redirect based on role
       if (response.user.role === 'admin') {
-        redirectUrl = '/admin/company-management'
+        router.replace('/admin/company-management')
       } else if (response.user.role === 'coach') {
-        redirectUrl = '/coach/team-management'
+        router.replace('/coach/team-management')
       } else if (response.user.role === 'sales') {
-        redirectUrl = '/sales'
+        router.replace('/sales')
+      } else {
+        router.replace('/pricing')
       }
-      
-      window.location.href = redirectUrl
     } catch (err: any) {
       const errorMessage = err?.message || "Login failed"
       
